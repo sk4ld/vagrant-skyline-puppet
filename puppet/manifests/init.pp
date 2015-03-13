@@ -61,7 +61,7 @@ class skyline (
   $full_duration      = 86400,
   $mini_duration      = 3600,
   $graphite_host      = '192.168.1.100',
-  $graphite_url       = "http://' + GRAPHITE_HOST + '/render/?width=1400&from=-1hour&target=%s",
+  $graphite_url       = "http://' + GRAPHITE_HOST + '/render/?width=1400&from=-1hour&target=metrics.%s",
   $carbon_port        = 2003,
   $oculus_host        = '',
   $anomaly_dump       = 'webapp/static/dump/anomalies.json',

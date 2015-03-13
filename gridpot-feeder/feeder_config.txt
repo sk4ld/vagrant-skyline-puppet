@@ -1,0 +1,9 @@
+[gridlabd]
+logpath=/var/log/skyline/
+gridpotmodel_file = IEEE_13_Node_Test_Feeder.gpm
+gridlabd_ip = 192.168.1.10
+gridlabd_port = 6267
+skyline_ip = localhost
+skyline_port = 2025
+graphite_ip = 192.168.1.100
+graphite_port = 80
