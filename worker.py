@@ -48,10 +48,10 @@ class Worker(Process):
     def send_graphite_metric(self, name, value):
         if settings.GRAPHITE_HOST != '':
             sock = socket.socket()
-            logger.info('Connecting to Graphite ' + str(settings.GRAPHITE_HOST) +":"+str(settings.CARBON_PORT))
+            logger.info("Connecting to Graphite at " + settings.GRAPHITE_HOST +":"+ str(settings.CARBON_PORT))
             sock.connect((settings.GRAPHITE_HOST, settings.CARBON_PORT))
-            sock.sendall('%s %s %i\n' % (name, value, time()))
-            logger.info('sent data [%s %s %i] to Graphite'%(name, value, time()))
+            sock.sendall('%s %s %i\n' % (name, str(value), time()))
+            logger.info("sent: " + str(name) +", "+ str( value ) + ", "+ str( time() ) )
             sock.close()
             return True
 
@@ -86,26 +86,26 @@ class Worker(Process):
                 # Get a chunk from the queue with a 15 second timeout
                 chunk = self.q.get(True, 15)
                 now = time()
-                
+
                 for metric in chunk:
-                    logger.info('processing chunk:' + str(metric))
+
                     # Check if we should skip it
-                    
                     if self.in_skip_list(metric[0]):
-                        logger.info('chunk in skip list')
+                        logger.info('[*] SKIPPING: ' + str(metric[0]) )
                         continue
 
                     # Bad data coming in
                     if metric[1][0] < now - MAX_RESOLUTION:
-                        logger.info('chunk is old or bad data')
                         continue
 
                     # Append to messagepack main namespace
                     key = ''.join((FULL_NAMESPACE, metric[0]))
-                    logger.info('adding to redis:' + str(key))
+                    logger.info('[*] constructing key: ' + str(key) )
+            
                     pipe.append(key, packb(metric[1]))
                     pipe.sadd(full_uniques, key)
-                    self.send_graphite_metric(str(key), metric[1][1])
+                    
+                    self.send_graphite_metric(key, metric[1][1])
 
                     if not self.skip_mini:
                         # Append to mini namespace

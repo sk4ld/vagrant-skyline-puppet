@@ -43,8 +43,8 @@ logger = logging.getLogger(__name__)
 # consider https://pypi.python.org/pypi/fastnumbers for faster parsing
 def is_complex(s):
     #print "[*] testing: <"+s[:-1]+'j>'
-    if s.count("+") + s.count("-") < 3:
-        return False
+    #if s.count("+") + s.count("-") < 3:
+    #    return False
     try:
         complex(s[:-1]+'j') # replace trailing d or i with 'j' for complex
     except ValueError:
@@ -122,7 +122,7 @@ class GridPotFeeder(object):
             
     def poll_gridlabd(self):
         while True:
-            sleep(1)
+            sleep(0.02)
             sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
             for x in self.SCADA_objects:
                 self.logger.info("[*]=========================================")
@@ -159,31 +159,34 @@ class GridPotFeeder(object):
                         for val in tokens:
                             
                             if is_number(val):
-                                if is_complex(val):
-                                    cval = complex(val[:-1]+'j')
-                                    
-                                    # send real component
-                                    packet = msgpack.packb((x.station_name+"."+x.obj_name+"."+str(prop)+"_r", [t, cval.real ] ))
-                                    
-                                    sock.sendto(packet, (self.skyline_ip, int(self.skyline_port)))
-                                    
-                                    self.logger.info( "[*] Sending to " + str(self.skyline_ip) + ":" + str(self.skyline_port)+" : [" + (x.station_name+"."+x.obj_name+"."+str(prop))+"_r" +", "+str(cval.real) + ", " + str(t) +"]"  )
-                                    # send imaginary component
-                                    packet = msgpack.packb((x.station_name+"."+x.obj_name+"."+str(prop)+"_i", [t, cval.imag ] ))
-                                    
-                                    sock.sendto(packet, (self.skyline_ip, int(self.skyline_port)))
-                                    
-                                    self.logger.info( "[*] Sending to " + str(self.skyline_ip) + ":" + str(self.skyline_port)+" : [" + (x.station_name+"."+x.obj_name+"."+str(prop))+"_i" +", "+str(cval.imag) + ", " + str(t) +"]"  )
-                                else:
-                                    
+                                try:
                                     # send numerical component
-                                    packet = msgpack.packb((x.station_name+"."+x.obj_name+"."+str(prop), [t, val ] ))
+                                    fval = float(val)
+                                    packet = msgpack.packb((x.station_name+"."+x.obj_name+"."+str(prop), [t, fval ] ))
                                     
                                     sock.sendto(packet, (self.skyline_ip, int(self.skyline_port)))
                                     
-                                    self.logger.info( "[*] Sending to " + str(self.skyline_ip) + ":" + str(self.skyline_port)+" : [" + (x.station_name+"."+x.obj_name+"."+str(prop)) +", "+str(val) + ", " + str(t) +"]"  )
+                                    self.logger.info( "[*] Sending to " + str(self.skyline_ip) + ":" + str(self.skyline_port)+" : [" + (x.station_name+"."+x.obj_name+"."+str(prop)) +", "+str(fval) + ", " + str(t) +"]"  )
+                                except ValueError:
+                                    if is_complex(val):
+                                        cval = complex(val[:-1]+'j')
+                                        
+                                        # send real component
+                                        packet = msgpack.packb((x.station_name+"."+x.obj_name+"."+str(prop)+"_r", [t, cval.real ] ))
+                                        
+                                        sock.sendto(packet, (self.skyline_ip, int(self.skyline_port)))
+                                        
+                                        self.logger.info( "[*] Sending to " + str(self.skyline_ip) + ":" + str(self.skyline_port)+" : [" + (x.station_name+"."+x.obj_name+"."+str(prop))+"_r" +", "+str(cval.real) + ", " + str(t) +"]"  )
+                                        # send imaginary component
+                                        packet = msgpack.packb((x.station_name+"."+x.obj_name+"."+str(prop)+"_i", [t, cval.imag ] ))
+                                        
+                                        sock.sendto(packet, (self.skyline_ip, int(self.skyline_port)))
+                                        
+                                        self.logger.info( "[*] Sending to " + str(self.skyline_ip) + ":" + str(self.skyline_port)+" : [" + (x.station_name+"."+x.obj_name+"."+str(prop))+"_i" +", "+str(cval.imag) + ", " + str(t) +"]"  )
+                                
                             else:
                                 self.logger.info("[*] Not a number: "+str(val) )
+                            #set the value at the end of the loop.
                             x.params[prop] = result
                             
                             
